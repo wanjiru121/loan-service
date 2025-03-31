@@ -1,7 +1,9 @@
 # Loan Service Documentation
 
 ## Project Overview
-The Loan Service is a backend system designed to manage loans and loan payments. It loads, processes, and stores loan data, evaluates payment statuses, and provides utility functions for querying loan-related information. The system operates using a JSON file as its data source and applies various status checks to determine loan repayment conditions.
+The Loan Service is a system designed to manage loans and loan payments. 
+It loads, processes, and stores loan data, evaluates payment statuses, and provides utility functions for querying loan-related information. 
+The system operates using a JSON file as its data source and applies various status checks to determine loan repayment conditions.
 
 ## Tech Stack
 - **Language:** Python 3, JavaScript (React)
