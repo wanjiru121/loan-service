@@ -47,10 +47,6 @@ A React-based Loan Calculator allows users to compute interest and total payment
 ### 5. Loan Payment Tracking Frontend
 A React-based Loan Payment Tracking component displays loan details, principal, interest rate, due date, and payment history.
 
-## Flask API Implementation
-### 1. Flask Application Setup
-The Loan Service is implemented as a Flask application, exposing GraphQL endpoints.
-
 ## Future Improvements
 - **Database Integration:** Replace JSON storage with a relational database like PostgreSQL.
 - **API Development:** Extend GraphQL with authentication and more advanced filtering.
