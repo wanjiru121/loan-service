@@ -1,0 +1,60 @@
+.calculator-container {
+    background: #fff;
+    padding: 100px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    margin: 2rem auto;
+    border: 1px solid #ddd;
+    min-height: 40vh;
+    width: 500px;
+}
+
+.calculator-title {
+    text-align: center;
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    outline: none;
+    transition: border 0.3s ease-in-out;
+}
+
+.input-field:focus {
+    border-color: #007bff;
+}
+
+.result {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.interest-amount {
+    color: #007bff;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.total-amount{
+    color: #007bff;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
