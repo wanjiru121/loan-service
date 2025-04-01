@@ -9,8 +9,8 @@ LOAN_PAYMENT_STATUS = {
     "DEFAULTED": "Defaulted",  # Payment not made after grace period
     "UNPAID": "Unpaid",  # No payment made at all
     "PARTIALLY_PAID": "Partially Paid",  # Partial payment made
-    "LATE_PARTIALLY_PAID": "Late & Partially Paid",  # Late partial payment
-    "DEFAULTED_PARTIALLY_PAID": "Defaulted & Partially Paid",  # Partial payment but defaulted
+    "LATE_PARTIALLY_PAID": "Late Partially Paid",  # Late partial payment
+    "DEFAULTED_PARTIALLY_PAID": "Defaulted Partially Paid",  # Partial payment but defaulted
 }
 
 

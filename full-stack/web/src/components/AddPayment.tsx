@@ -4,7 +4,7 @@ import gql from 'graphql-tag';
 import '../style/AddPayment.css';
 
 const MAKE_PAYMENT_MUTATION = gql`
-  mutation MakePayment($loan_id: Int!, $payment_date: String!, $amount: Float!) {
+  mutation MakePayment($loan_id: Int!, $payment_date: Date!, $amount: Float!) {
     makePayment(loan_id: $loan_id, payment_date: $payment_date, amount: $amount) {
       payment {
         id

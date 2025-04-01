@@ -28,7 +28,7 @@ interface Loan {
   principal: number;
   interest_rate: number;
   due_date: string;
-  loan_payments: { id: number; loan_id: number; payment_date: string; amount: number }[];
+  loan_payments: { id: number; loan_id: number; payment_date: Date; amount: number }[];
   payment_status: string;
 }
 
