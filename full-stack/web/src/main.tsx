@@ -12,17 +12,21 @@ const client = new ApolloClient({
   cache: new InMemoryCache(),
 });
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <ApolloProvider client={client}>
-      <BrowserRouter>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<LoanPayments />} />
-          <Route path="/make-payment" element={<AddPayment />} />
-          <Route path="/loan-calculator" element={<LoanCalculator />} />
-        </Routes>
-      </BrowserRouter>
-    </ApolloProvider>
-  </StrictMode>
-);
+const rootElement = document.getElementById("root");
+
+if (rootElement) {
+  createRoot(rootElement).render(
+    <StrictMode>
+      <ApolloProvider client={client}>
+        <BrowserRouter>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<LoanPayments />} />
+            <Route path="/make-payment" element={<AddPayment />} />
+            <Route path="/loan-calculator" element={<LoanCalculator />} />
+          </Routes>
+        </BrowserRouter>
+      </ApolloProvider>
+    </StrictMode>
+  );
+}
