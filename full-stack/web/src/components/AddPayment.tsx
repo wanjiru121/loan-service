@@ -26,6 +26,18 @@ const CHECK_LOAN_STATUS_QUERY = gql`
   }
 `;
 
+interface CheckLoanStatusData {
+    loan: {
+      id: number;
+      principal: number;
+      remaining_balance: number;
+    }
+}
+
+interface CheckLoanStatusVars {
+  loan_id: number
+};
+
 const AddNewPayment = () => {
   const [loanId, setLoanId] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
@@ -35,7 +47,7 @@ const AddNewPayment = () => {
   const paymentDate = new Date().toISOString().split('T')[0];
   const loanIdInt = parseInt(loanId, 10) || 0;
 
-  const { data, loading, error: queryError } = useQuery(CHECK_LOAN_STATUS_QUERY, {
+  const { data, loading, error: queryError } = useQuery<CheckLoanStatusData, CheckLoanStatusVars>(CHECK_LOAN_STATUS_QUERY, {
     variables: { loan_id: loanIdInt },
     skip: !loanIdInt,
   });
@@ -87,7 +99,12 @@ const AddNewPayment = () => {
       setLoanId('');
       setAmount('');
     } catch (mutationError) {
-      setError(mutationError.message || 'An error occurred while making the payment.');
+      if (mutationError instanceof Error) {
+        setError(mutationError.message);
+      } else {
+        setError('An error occurred while making the payment.');
+      }
+    
     }
   };
 
@@ -100,14 +117,14 @@ const AddNewPayment = () => {
       {error && <div className="error-message">{error}</div>}
       {successMessage && <div className="success-message">{successMessage}</div>}
 
-      <form onSubmit={handleSubmit} className="payment-form">
+      <form onSubmit={(e) => { void handleSubmit(e); }} className="payment-form">
         <div className="form-group">
           <label className="form-label">Payment Loan ID</label>
           <input
             name="loan-id"
             type="number"
             value={loanId}
-            onChange={(e) => setLoanId(e.target.value)}
+            onChange={(e) => {setLoanId(e.target.value)}}
             className="form-input"
             placeholder="Enter Loan ID"
           />
@@ -119,7 +136,7 @@ const AddNewPayment = () => {
             name="payment-amount"
             type="number"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => {setAmount(e.target.value)}}
             className="form-input"
             placeholder="Enter Payment Amount"
           />
