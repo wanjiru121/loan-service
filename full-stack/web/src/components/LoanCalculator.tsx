@@ -32,7 +32,7 @@ export const LoanCalculator = () => {
         <input
           type="number"
           value={principal}
-          onChange={(e) => setPrincipal(e.target.value)}
+          onChange={(e) => {setPrincipal(e.target.value)}}
           className="input-field"
           placeholder="Enter Principal Amount"
           min="1"
@@ -44,7 +44,7 @@ export const LoanCalculator = () => {
         <input
           type="number"
           value={rate}
-          onChange={(e) => setRate(e.target.value)}
+          onChange={(e) => {setRate(e.target.value)}}
           className="input-field"
           placeholder="Enter Interest Rate"
           min="1"
@@ -56,7 +56,7 @@ export const LoanCalculator = () => {
         <input
           type="number"
           value={months}
-          onChange={(e) => setMonths(e.target.value)}
+          onChange={(e) => {setMonths(e.target.value)}}
           className="input-field"
           placeholder="Enter Loan Duration"
           min="1"

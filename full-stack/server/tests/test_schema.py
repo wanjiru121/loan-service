@@ -3,6 +3,8 @@ from datetime import date
 from graphene.test import Client
 from views.schema import graphql_schema
 from services.loan_service import LoanService
+from utils.helpers import generate_due_dates, calculate_expected_repayment
+from config.constants import LOAN_PAYMENT_STATUS
 
 
 # Context class that holds the loan service instance to be used in tests
@@ -25,6 +27,7 @@ def loan_service():
     :return: An instance of LoanService with pre-configured loan and payment data.
     """
     service = LoanService()
+
     # Adding initial loan data
     service.loans = [
         {
@@ -32,21 +35,35 @@ def loan_service():
             "name": "Loan 1",
             "interest_rate": 5.0,
             "principal": 1000,
-            "due_date": date(2025, 5, 1),
-            "remaining_balance": 1000,
+            "start_date": "2025-2-28",
+            "remaining_balance": calculate_expected_repayment(1000, 5.0, 12) - 500,
+            "months": 10,
+            "expected_repayment_amount": calculate_expected_repayment(1000, 5.0, 12),
+            "due_dates": generate_due_dates("2025-5-1", 10),
         },
         {
             "id": 2,
             "name": "Loan 2",
             "interest_rate": 7.0,
             "principal": 2000,
-            "due_date": date(2025, 6, 1),
-            "remaining_balance": 1500,
+            "start_date": "2025-6-1",
+            "remaining_balance": calculate_expected_repayment(2000, 7.0, 5) - 0,
+            "months": 5,
+            "expected_repayment_amount": calculate_expected_repayment(2000, 7.0, 5),
+            "due_dates": generate_due_dates("2025-6-1", 5),
         },
     ]
+
     # Adding initial payment data
     service.loan_payments = [
-        {"id": 1, "loan_id": 1, "payment_date": date(2025, 3, 1), "amount": 500}
+        {
+            "id": 1,
+            "loan_id": 1,
+            "payment_date": date(2025, 3, 1),
+            "due_date": date(2025, 2, 1),
+            "amount": 500,
+            "status": LOAN_PAYMENT_STATUS["ON_TIME"],
+        }
     ]
     return service
 
@@ -77,7 +94,6 @@ def test_query_loans(graphql_client, loan_service):
             name
             interest_rate
             principal
-            due_date
             remaining_balance
         }
     }
@@ -94,16 +110,14 @@ def test_query_loans(graphql_client, loan_service):
             "name": "Loan 1",
             "interest_rate": 5.0,
             "principal": 1000,
-            "due_date": "2025-05-01",
-            "remaining_balance": 500,
+            "remaining_balance": 1100,
         },
         {
             "id": 2,
             "name": "Loan 2",
             "interest_rate": 7.0,
             "principal": 2000,
-            "due_date": "2025-06-01",
-            "remaining_balance": 2000,
+            "remaining_balance": 2700,
         },
     ]
 
@@ -123,7 +137,6 @@ def test_query_loan_by_id(graphql_client, loan_service):
             name
             interest_rate
             principal
-            due_date
             remaining_balance
         }
     }
@@ -141,8 +154,7 @@ def test_query_loan_by_id(graphql_client, loan_service):
         "name": "Loan 1",
         "interest_rate": 5.0,
         "principal": 1000,
-        "due_date": "2025-05-01",
-        "remaining_balance": 500,
+        "remaining_balance": 1100,
     }
 
 
@@ -155,14 +167,14 @@ def test_create_loan(graphql_client, loan_service):
     :param loan_service: The loan service instance to be used in the mutation.
     """
     mutation = """
-    mutation createLoan($name: String!, $interest_rate: Float!, $principal: Int!, $due_date: Date!) {
-        createLoan(name: $name, interest_rate: $interest_rate, principal: $principal, due_date: $due_date) {
+    mutation createLoan($name: String!, $interest_rate: Float!, $principal: Int!, $months: Int!) {
+        createLoan(name: $name, interest_rate: $interest_rate, principal: $principal, months: $months) {
             loan {
                 id
                 name
                 interest_rate
                 principal
-                due_date
+                months
             }
         }
     }
@@ -171,7 +183,7 @@ def test_create_loan(graphql_client, loan_service):
         "name": "New Loan",
         "interest_rate": 5.5,
         "principal": 1500,
-        "due_date": "2025-07-01",
+        "months": 10
     }
     response = graphql_client.execute(
         mutation, variable_values=variables, context_value=Context(loan_service)
@@ -185,7 +197,7 @@ def test_create_loan(graphql_client, loan_service):
         "name": "New Loan",
         "interest_rate": 5.5,
         "principal": 1500,
-        "due_date": "2025-07-01",
+        "months": 10
     }
 
 
@@ -209,7 +221,7 @@ def test_make_payment(graphql_client, loan_service):
         }
     }
     """
-    variables = {"loan_id": 1, "payment_date": "2025-04-01", "amount": 500}
+    variables = {"loan_id": 1, "payment_date": "2025-04-01", "amount": 160}
     response = graphql_client.execute(
         mutation, variable_values=variables, context_value=Context(loan_service)
     )
@@ -221,7 +233,7 @@ def test_make_payment(graphql_client, loan_service):
         "id": 2,
         "loan_id": 1,
         "payment_date": "2025-04-01",
-        "amount": 500,
+        "amount": 160,
     }
 
 
@@ -253,8 +265,9 @@ def test_make_payment_exceeds_balance(graphql_client, loan_service):
     # Assertions to ensure the error is returned when payment exceeds balance
     assert response is not None
     assert "errors" in response
-    assert "The payment amount exceeds the remaining loan balance" in str(
-        response["errors"]
+    assert (
+        "The payment amount must be equal to the expected monthly installment of 540.00."
+        in str(response["errors"])
     )
 
 
