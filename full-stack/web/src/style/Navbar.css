@@ -2,7 +2,7 @@
 .sidebar {
     width: 250px;
     height: 100vh;
-    background-color: #007bff;
+    background-color: #8baacc;
     display: flex;
     flex-direction: column;
     padding: 20px;
@@ -10,6 +10,16 @@
     left: 0;
     top: 0;
     overflow-y: auto;
+}
+
+.logo {
+    text-align: center;
+    padding: 10px;
+}
+  
+.logo img {
+    max-width: 100px;
+    height: auto;
 }
 
 /* Nav list */

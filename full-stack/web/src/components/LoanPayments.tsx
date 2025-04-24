@@ -1,4 +1,3 @@
-import React from 'react';
 import { gql, useQuery } from '@apollo/client';
 import LoanCard from './LoanCard';
 import '../style/LoanPayment.css';
@@ -10,14 +9,17 @@ const GET_LOANS = gql`
       name
       principal
       interest_rate
-      due_date
       loan_payments {
         id
         loan_id
         payment_date
         amount
+        status
+        due_date
       }
-      payment_status
+      remaining_balance
+      expected_repayment_amount
+      months
     }
   }
 `;
@@ -27,13 +29,14 @@ interface Loan {
   name: string;
   principal: number;
   interest_rate: number;
-  due_date: string;
-  loan_payments: { id: number; loan_id: number; payment_date: Date; amount: number }[];
-  payment_status: string;
+  loan_payments: { id: number; loan_id: number; payment_date: Date; amount: number, status: string, due_date: Date }[];
+  remaining_balance: number;
+  expected_repayment_amount: number;
+  months: number;
 }
 
-const LoanPayments: React.FC = () => {
-  const { loading, error, data } = useQuery(GET_LOANS);
+const LoanPayments = () => {
+  const { loading, error, data } = useQuery<{ loans: Loan[] }>(GET_LOANS);
 
   if (loading) return <p>Loading...</p>;
   if (error) {
@@ -49,7 +52,7 @@ const LoanPayments: React.FC = () => {
 
   return (
     <div className="loan-app">
-      <h1 className="title">Loan Payment Status</h1>
+      <h1 className="title">Loans and Loan Payments</h1>
       <div className="loan-list">
         {loans.map((loan) => (
           <LoanCard key={loan.id} loan={loan} />

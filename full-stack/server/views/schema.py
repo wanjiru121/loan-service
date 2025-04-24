@@ -1,4 +1,6 @@
 import graphene
+from datetime import datetime
+from config.constants import LOAN_PAYMENT_STATUS
 
 
 class LoanPayment(graphene.ObjectType):
@@ -9,7 +11,9 @@ class LoanPayment(graphene.ObjectType):
     id = graphene.Int()
     loan_id = graphene.Int(name="loan_id")
     payment_date = graphene.Date(name="payment_date")
+    due_date = graphene.Date(name="due_date")
     amount = graphene.Float()
+    status = graphene.String()
 
 
 class ExistingLoans(graphene.ObjectType):
@@ -19,18 +23,24 @@ class ExistingLoans(graphene.ObjectType):
 
     id = graphene.Int()
     name = graphene.String()
+    start_date = graphene.Date(name="start_date")
     interest_rate = graphene.Float(name="interest_rate")
     principal = graphene.Int()
-    due_date = graphene.Date(name="due_date")
+    due_dates = graphene.List(
+        graphene.String,
+        description="List of due dates for loan payments",
+        name="due_dates",
+    )
+    expected_repayment_amount = graphene.Float(
+        description="Expected total repayment amount including interest",
+        name="expected_repayment_amount",
+    )
     loan_payments = graphene.List(
-        LoanPayment, description="List of loan payments", name="loan_payments"
+        LoanPayment, description="List of loan payments made", name="loan_payments"
     )
-    payment_status = graphene.String(
-        description="Payment status of the loan", name="payment_status"
-    )
-    remaining_balance = graphene.Float(
-        description="Remaining loan balance", name="remaining_balance"
-    )
+
+    remaining_balance = graphene.Int(name="remaining_balance")
+    months = graphene.Int()
 
     def resolve_loan_payments(self, info):
         """
@@ -38,24 +48,6 @@ class ExistingLoans(graphene.ObjectType):
         """
         loan_service = info.context.loan_service
         return loan_service.get_payments_by_loan_id(self["id"])
-
-    def resolve_payment_status(self, info):
-        """
-        Resolves and returns the payment status of the loan.
-        """
-        loan_service = info.context.loan_service
-        return loan_service.get_payment_status(self)
-
-    def resolve_remaining_balance(self, info):
-        """
-        Resolves and calculates the remaining balance of the loan.
-        """
-        loan_service = info.context.loan_service
-        total_paid = sum(
-            payment["amount"]
-            for payment in loan_service.get_payments_by_loan_id(self["id"])
-        )
-        return max(0, self["principal"] - total_paid)
 
 
 class Query(graphene.ObjectType):
@@ -90,11 +82,11 @@ class CreateLoan(graphene.Mutation):
         name = graphene.String()
         interest_rate = graphene.Float(name="interest_rate")
         principal = graphene.Int()
-        due_date = graphene.Date(name="due_date")
+        months = graphene.Int()
 
     loan = graphene.Field(ExistingLoans)
 
-    def mutate(self, info, name, interest_rate, principal, due_date):
+    def mutate(self, info, name, interest_rate, principal, months):
         """
         Creates a new loan and adds it to the loan service.
         """
@@ -104,8 +96,9 @@ class CreateLoan(graphene.Mutation):
             "name": name,
             "interest_rate": interest_rate,
             "principal": principal,
-            "due_date": due_date,
+            "months": months,
         }
+
         loan_service.loans.append(new_loan)
         loan_service.save_data()
         return CreateLoan(loan=new_loan)
@@ -150,15 +143,51 @@ class MakePayment(graphene.Mutation):
                 f"The payment amount exceeds the remaining loan balance of {remaining_balance:.2f}."
             )
 
+        # Calculate the expected monthly installment
+        expected_monthly_installment = (
+            loan["expected_repayment_amount"] / loan["months"]
+        )
+
+        if amount != expected_monthly_installment:
+            raise Exception(
+                f"The payment amount must be equal to the expected monthly installment of {expected_monthly_installment:.2f}."
+            )
+
+        # Determine the due date for the current payment
+        due_date_str = loan["due_dates"][len(loan_service.loan_payments)]
+        due_date = datetime.fromisoformat(due_date_str).date()
+
+        # Determine the payment status
+        payment_status = LOAN_PAYMENT_STATUS["ON_TIME"]  # Default status is ON_TIME
+
+        # If the payment is made after the due date but within grace period
+        grace_period_days = 30  # Assuming grace period is 30 days
+
+        due_date_obj = datetime.strptime(str(due_date), "%Y-%m-%d")
+        payment_date_obj = datetime.strptime(str(payment_date), "%Y-%m-%d")
+
+        if payment_date_obj > due_date_obj:
+            if (payment_date_obj - due_date_obj).days <= grace_period_days:
+                payment_status = LOAN_PAYMENT_STATUS["LATE"]
+            else:
+                payment_status = LOAN_PAYMENT_STATUS["DEFAULTED"]
+
+        # Record the new payment
         new_payment = {
             "id": len(loan_service.loan_payments) + 1,
             "loan_id": loan_id,
             "payment_date": payment_date,
+            "due_date": due_date,
             "amount": amount,
+            "status": payment_status,
         }
 
         loan_service.loan_payments.append(new_payment)
+
+        # Update the remaining balance
         loan["remaining_balance"] -= amount
+
+        # Save data (this will persist the updated loan and payment details)
         loan_service.save_data()
 
         return MakePayment(payment=new_payment)
